@@ -36,3 +36,17 @@ docker run --rm \
 ```
 
 For `delete`, the script takes one argument: `username`.
+
+## List Users
+```
+docker run --rm \
+  -u "$(id -u)" \
+  -w /data \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  -e AWS_DEFAULT_REGION \
+  --tmpfs /tmp \
+  -v "${PWD}":/data \
+  mbentley/aws-manage-user \
+  list
+```

@@ -8,8 +8,13 @@ main() {
     delete)
       delete_user "${2}"
       ;;
+    list)
+      aws iam list-users | jq -r '.Users|.[].UserName'
+      ;;
     *)
-      echo "Usage: ${0} {create|delete} <username>"
+      echo "Usage: ${0} create <username> {user|admin}"
+      echo "Usage: ${0} delete <username>"
+      echo "Usage: ${0} list"
       exit 1
       ;;
   esac
