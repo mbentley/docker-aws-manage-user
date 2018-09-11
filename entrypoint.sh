@@ -1,9 +1,11 @@
 #!/bin/sh
 
+set -e
+
 main() {
   case ${1} in
     create)
-      create_user "${2}"
+      create_user "${2}" "${3}"
       ;;
     delete)
       delete_user "${2}"
@@ -17,6 +19,7 @@ main() {
 
 create_user(){
   USERNAME="${1:-}"
+  USER_TYPE="${2:-user}"
   PASSWORD="$(date +%s | sha256sum | base64 | head -c 32)"
 
   if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ]
@@ -28,6 +31,13 @@ create_user(){
   if [ -z "${USERNAME}" ]
   then
     echo "Missing USERNAME"
+    exit 1
+  fi
+
+  if [ "${USER_TYPE}" != "user" ] && [ "${USER_TYPE}" != "admin" ]
+  then
+    echo "Invalid user type (${USER_TYPE})"
+    echo "Valid types: {user|admin}"
     exit 1
   fi
 
@@ -50,6 +60,18 @@ create_user(){
   done
   echo "done";echo
 
+  # add user to admin groups
+  if [ "${USER_TYPE}" = "admin" ]
+  then
+    echo "Adding admin groups for ${USERNAME}..."
+    for GROUP in ad_admin admin
+    do
+      aws iam add-user-to-group --user-name "${USERNAME}" --group-name "${GROUP}"
+      echo "  Added ${USERNAME} to ${GROUP}"
+    done
+    echo "done";echo
+  fi
+
   # create access key
   echo "Creating access key for ${USERNAME}..."
   ACCESS_KEY="$(aws iam create-access-key --user-name "${USERNAME}")"
@@ -57,6 +79,7 @@ create_user(){
 
   echo "User account creation complete!"
   echo "Account URL: https://$(aws iam list-account-aliases | jq -r '.AccountAliases|.[]').signin.aws.amazon.com/console"
+  echo "Account type: ${USER_TYPE}"
   echo "Username: ${USERNAME}"
   echo "Password: ${PASSWORD}"
   echo "Access Key ID: $(echo "${ACCESS_KEY}" | jq -r .AccessKey.AccessKeyId)"
