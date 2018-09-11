@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 main() {
   case ${1} in
     create)
@@ -120,6 +118,17 @@ delete_user() {
   for KEY in $(aws iam list-access-keys --user-name "${USERNAME}" | jq -r '.AccessKeyMetadata|.[].AccessKeyId')
   do
     aws iam delete-access-key --user-name "${USERNAME}" --access-key-id "${KEY}"
+  done
+  echo "done";echo
+
+  # deactivate and remove all MFA devices
+  echo "Removing all MFA devices for ${USERNAME}..."
+  for MFA in $(aws iam list-mfa-devices --user-name "${USERNAME}" | jq -r '.MFADevices|.[].SerialNumber')
+  do
+    aws iam deactivate-mfa-device --user-name "${USERNAME}" --serial-number "${MFA}"
+    echo "  Deactivated ${MFA} from ${USERNAME}"
+    aws iam delete-virtual-mfa-device --serial-number "${MFA}"
+    echo "  Deleted ${MFA}"
   done
   echo "done";echo
 
