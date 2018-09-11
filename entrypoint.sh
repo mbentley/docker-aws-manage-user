@@ -8,12 +8,16 @@ main() {
     delete)
       delete_user "${2}"
       ;;
+    mfacheck)
+      mfa_check "${2}"
+      ;;
     list)
       aws iam list-users | jq -r '.Users|.[].UserName'
       ;;
     *)
       echo "Usage: ${0} create <username> {user|admin}"
       echo "Usage: ${0} delete <username>"
+      echo "Usage: ${0} mfacheck {username}"
       echo "Usage: ${0} list"
       exit 1
       ;;
@@ -144,6 +148,29 @@ delete_user() {
 
   echo "User account removal complete!"
   echo "Username: ${USERNAME}"
+}
+
+mfa_check() {
+  if [ -z "${1}" ]
+  then
+    # check to see if all users have MFA enabled; output if not
+    for USER in $(aws iam list-users | jq -r '.Users|.[].UserName')
+    do
+      MFA=$(aws iam list-mfa-devices --user-name "${USER}" | jq -r '.MFADevices|.[].SerialNumber')
+      if [ -z "${MFA}" ]
+      then
+        echo "${USER} - MFA NOT Enabled"
+      fi
+    done
+  else
+    MFA=$(aws iam list-mfa-devices --user-name "${1}" | jq -r '.MFADevices|.[].SerialNumber')
+    if [ -z "${MFA}" ]
+    then
+      echo "${1} - MFA NOT Enabled"
+    else
+      echo "${1} - MFA Enabled"
+    fi
+  fi
 }
 
 main "${@}"
