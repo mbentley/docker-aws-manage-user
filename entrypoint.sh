@@ -32,21 +32,30 @@ create_user(){
   fi
 
   # create new user
+  echo "Creating user ${USERNAME}..."
   aws iam create-user --user-name "${USERNAME}"
+  echo "done";echo
 
   # set the default password
+  echo "Setting the default password for ${USERNAME}..."
   aws iam create-login-profile --user-name "${USERNAME}" --password "${PASSWORD}" --password-reset-required
+  echo "done";echo
 
   # add user to default groups
+  echo "Adding default groups for ${USERNAME}..."
   for GROUP in presales everyone efs manage_certs
   do
     aws iam add-user-to-group --user-name "${USERNAME}" --group-name "${GROUP}"
+    echo "  Added ${USERNAME} to ${GROUP}"
   done
+  echo "done";echo
 
   # create access key
+  echo "Creating access key for ${USERNAME}..."
   ACCESS_KEY="$(aws iam create-access-key --user-name "${USERNAME}")"
+  echo "done";echo
 
-  echo;echo "User account creation complete!"
+  echo "User account creation complete!"
   echo "Account URL: https://$(aws iam list-account-aliases | jq -r '.AccountAliases|.[]').signin.aws.amazon.com/console"
   echo "Username: ${USERNAME}"
   echo "Password: ${PASSWORD}"
@@ -70,24 +79,33 @@ delete_user() {
   fi
 
   # remove user login profile
+  echo "Removing login profile for ${USERNAME}..."
   aws iam delete-login-profile --user-name "${USERNAME}"
+  echo "done";echo
 
   # remove user from all groups
+  echo "Removing all groups for ${USERNAME}..."
   for GROUP in $(aws iam list-groups-for-user --user-name "${USERNAME}" | jq -r '.Groups|.[].GroupName')
   do
     aws iam remove-user-from-group --user-name "${USERNAME}" --group-name "${GROUP}"
+    echo "  Removed ${USERNAME} from ${GROUP}"
   done
+  echo "done";echo
 
   # remove user's access keys
+  echo "Removing all access keys for ${USERNAME}..."
   for KEY in $(aws iam list-access-keys --user-name "${USERNAME}" | jq -r '.AccessKeyMetadata|.[].AccessKeyId')
   do
     aws iam delete-access-key --user-name "${USERNAME}" --access-key-id "${KEY}"
   done
+  echo "done";echo
 
   # remove user
+  echo "Removing user ${USERNAME}..."
   aws iam delete-user --user-name "${USERNAME}"
+  echo "done";echo
 
-  echo;echo "User account removal complete!"
+  echo "User account removal complete!"
   echo "Username: ${USERNAME}"
 }
 
