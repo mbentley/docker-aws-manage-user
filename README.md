@@ -1,5 +1,5 @@
-mbentley/awscli
-===============
+mbentley/aws-manage-user
+========================
 
 docker image for creating and deleting users
 based off of mbentley/awscli
@@ -14,8 +14,12 @@ docker run --rm \
   -e AWS_DEFAULT_REGION \
   --tmpfs /tmp \
   -v "${PWD}":/data \
-  mbentley/aws-manage-user create foo
+  mbentley/aws-manage-user \
+  create foo user
 ```
+
+For `create`, the script takes two arguments: `username` and `user_type` where `user_type` is either `user` or `admin`.
+
 
 ## Delete User `foo`
 ```
@@ -27,5 +31,8 @@ docker run --rm \
   -e AWS_DEFAULT_REGION \
   --tmpfs /tmp \
   -v "${PWD}":/data \
-  mbentley/aws-manage-user delete foo
+  mbentley/aws-manage-user \
+  delete foo
 ```
+
+For `delete`, the script takes one argument: `username`.
